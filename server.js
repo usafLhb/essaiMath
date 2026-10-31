@@ -8,7 +8,8 @@ const path = require('path');
 const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join(__dirname, 'data.json');
+// Sur Vercel, seul /tmp est accessible en écriture (et il est effacé régulièrement).
+const DATA_FILE = process.env.VERCEL ? '/tmp/data.json' : path.join(__dirname, 'data.json');
 const SEED_FILE = path.join(__dirname, 'data.seed.json');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const QUIZ_SIZE = 10;
@@ -371,15 +372,20 @@ function serveStatic(res, pathname) {
 }
 
 // ---------- Serveur ----------
-http
-  .createServer(async (req, res) => {
-    const url = new URL(req.url, 'http://localhost');
-    try {
-      if (url.pathname.startsWith('/api/')) await handleApi(req, res, url);
-      else serveStatic(res, url.pathname);
-    } catch (err) {
-      if (!(err instanceof HttpError)) console.error(err);
-      send(res, err.status || 500, { error: err instanceof HttpError ? err.message : 'Erreur interne du serveur.' });
-    }
-  })
-  .listen(PORT, () => console.log(`MathQuiz démarré sur http://localhost:${PORT}`));
+async function handler(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  try {
+    if (url.pathname.startsWith('/api/')) await handleApi(req, res, url);
+    else serveStatic(res, url.pathname);
+  } catch (err) {
+    if (!(err instanceof HttpError)) console.error(err);
+    send(res, err.status || 500, { error: err instanceof HttpError ? err.message : 'Erreur interne du serveur.' });
+  }
+}
+
+// Exporté pour Vercel (api/index.js) ; lancé comme serveur classique avec `node server.js`.
+module.exports = handler;
+
+if (require.main === module) {
+  http.createServer(handler).listen(PORT, () => console.log(`MathQuiz démarré sur http://localhost:${PORT}`));
+}

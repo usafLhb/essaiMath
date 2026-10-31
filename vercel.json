@@ -1,0 +1,8 @@
+{
+  "framework": null,
+  "outputDirectory": "public",
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/api" }],
+  "functions": {
+    "api/index.js": { "includeFiles": "data.seed.json" }
+  }
+}
