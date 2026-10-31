@@ -1,0 +1,6 @@
+# Base de données locale (créée à partir de data.seed.json au premier lancement)
+data.json
+data.json.tmp
+
+node_modules/
+.claude/
